@@ -44,13 +44,22 @@ await connectDB();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: '*',
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:3000',
+    'https://artwall-fawn.vercel.app',
+    'https://uas-server.vercel.app'
+  ],
   credentials: true
 }));
 
 // SSE middleware - bypass CORS and auth for EventSource
 app.use('/api/messages/:user_id', (req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://artwall-fawn.vercel.app'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
   next();
@@ -58,7 +67,11 @@ app.use('/api/messages/:user_id', (req, res, next) => {
 
 // CORS middleware for messages/recent endpoint
 app.use('/api/messages/recent', (req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://artwall-fawn.vercel.app'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
@@ -198,7 +211,11 @@ app.get('/api/messages/:user_id', (req, res, next) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive'); 
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://artwall-fawn.vercel.app'];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
 
     // Add to connections
