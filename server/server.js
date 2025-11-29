@@ -82,8 +82,24 @@ app.use(clerkMiddleware());
 app.use((req, res, next) => {
   console.log(`🔍 ${req.method} ${req.url}`);
   console.log('🔍 Request headers:', Object.keys(req.headers));
+  console.log('🔍 Origin:', req.headers.origin);
+  console.log('🔍 Cookie:', req.headers.cookie);
   console.log('🔍 Request params:', req.params);
   console.log('🔍 Request query:', req.query);
+  if (req.url.includes('/api/users')) {
+    console.log('👤 User API request details:', {
+      method: req.method,
+      url: req.url,
+      originalUrl: req.originalUrl,
+      path: req.path,
+      headers: {
+        'user-agent': req.headers['user-agent'],
+        'origin': req.headers.origin,
+        'referer': req.headers.referer,
+        'cookie': req.headers.cookie
+      }
+    });
+  }
   if (req.url.includes('/messages')) {
     console.log('📨 Message request details:', {
       method: req.method,
