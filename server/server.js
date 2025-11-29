@@ -44,23 +44,13 @@ await connectDB();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: [
-    'http://localhost:5173', 
-    'http://localhost:3000',
-    'https://artwall-fawn.vercel.app',
-    'https://artwall-mx8a303f4-edric-s-projects.vercel.app',
-    'https://artwall-4g7r7z3z7-edric-s-projects.vercel.app'
-  ],
+  origin: '*',
   credentials: true
 }));
 
 // SSE middleware - bypass CORS and auth for EventSource
 app.use('/api/messages/:user_id', (req, res, next) => {
-  const allowedOrigins = ['http://localhost:5173', 'http://localhost:4000', 'https://artwall-fawn.vercel.app', 'https://artwall-mx8a303f4-edric-s-projects.vercel.app', 'https://artwall-4g7r7z3z7-edric-s-projects.vercel.app'];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
   next();
@@ -68,11 +58,7 @@ app.use('/api/messages/:user_id', (req, res, next) => {
 
 // CORS middleware for messages/recent endpoint
 app.use('/api/messages/recent', (req, res, next) => {
-  const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://artwall-fawn.vercel.app', 'https://artwall-mx8a303f4-edric-s-projects.vercel.app', 'https://artwall-4g7r7z3z7-edric-s-projects.vercel.app'];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
@@ -111,7 +97,7 @@ console.log('🔍 Registered Inngest functions:',
 
 // Inngest CORS + middleware (sebelum serve)
 app.use('/api/inngest', cors({
-  origin: ['https://app.inngest.com', 'https://inngest.com'],
+  origin: '*',
   credentials: true
 }));
 
@@ -212,11 +198,7 @@ app.get('/api/messages/:user_id', (req, res, next) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive'); 
-    const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://artwall-fawn.vercel.app', 'https://artwall-mx8a303f4-edric-s-projects.vercel.app', 'https://artwall-4g7r7z3z7-edric-s-projects.vercel.app'];
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
 
     // Add to connections
