@@ -266,10 +266,12 @@ app.get('/api/messages/:user_id', (req, res, next) => {
 });
 
 // Routes
+console.log('🚀 [ROUTES] Registering routes...');
 app.use('/api/users', userRouter);
 app.use('/api/posts', postRouter);
 app.use('/api/stories', storyRouter);
 app.use('/api/messages', messageRouter); // For /send and /get only
+console.log('🚀 [ROUTES] All routes registered!');
 
 // Test endpoint
 app.get('/api/test', (req, res) => {
