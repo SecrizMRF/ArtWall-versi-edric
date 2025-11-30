@@ -50,14 +50,15 @@ app.use(cors({
     'https://artwall-fawn.vercel.app',
     'https://uas-server.vercel.app',
     'https://30novbe.vercel.app',
-    'https://30novfe-seven.vercel.app'
+    'https://30novfe-seven.vercel.app',
+    'https://new-frontend-url.com' // New frontend URL added to CORS
   ],
   credentials: true
 }));
 
 // SSE middleware - bypass CORS and auth for EventSource
 app.use('/api/messages/:user_id', (req, res, next) => {
-  const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://artwall-fawn.vercel.app','https://30novbe.vercel.app', 'https://30novfe-seven.vercel.app', 'https://uas-server.vercel.app'];
+  const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://artwall-fawn.vercel.app','https://30novbe.vercel.app', 'https://30novfe-seven.vercel.app', 'https://uas-server.vercel.app', 'https://new-frontend-url.com']; // New frontend URL added to allowed origins
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
