@@ -88,7 +88,17 @@ const StoryModal = ({setShowModal, fetchStories}) => {
         
         try {
             console.log('📖 [StoryModal] Making API call to:', api.defaults.baseURL + '/api/stories/create');
-            const { data } = await api.post('/api/stories/create', formData, {headers: {Authorization: `Bearer ${token}`}})
+            
+            // Add timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            const { data } = await api.post('/api/stories/create', formData, {
+                headers: {Authorization: `Bearer ${token}`},
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
             console.log('📖 [StoryModal] API response:', data);
             
             if(data.success){
@@ -104,7 +114,13 @@ const StoryModal = ({setShowModal, fetchStories}) => {
             console.error('📖 [StoryModal] Error creating story:', error);
             console.error('📖 [StoryModal] Error response:', error.response?.data);
             console.error('📖 [StoryModal] Error status:', error.response?.status);
-            toast.error(error.message)
+            console.error('📖 [StoryModal] Error code:', error.code);
+            
+            if (error.name === 'AbortError') {
+                toast.error("Request timeout - server not responding");
+            } else {
+                toast.error(error.message || "Failed to create story");
+            }
         }
     }
 
