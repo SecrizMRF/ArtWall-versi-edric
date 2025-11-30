@@ -20,4 +20,25 @@ const imagekit = new ImageKit({
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/your_imagekit_id'
 });
 
+// Add debug method to track ImageKit calls
+const originalUpload = imagekit.upload;
+imagekit.upload = function(options) {
+    console.log('🔍 ImageKit.upload called with:', {
+        fileName: options.fileName,
+        fileSize: options.file?.length || options.file?.size,
+        fileType: typeof options.file,
+        hasBuffer: Buffer.isBuffer(options.file)
+    });
+    
+    return originalUpload.call(this, options).catch(error => {
+        console.error('🔍 ImageKit.upload error:', error);
+        console.error('🔍 ImageKit.upload error details:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        throw error;
+    });
+};
+
 export default imagekit;

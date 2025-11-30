@@ -110,10 +110,17 @@ export const sendMessage = async (req, res) => {
         let message_type = image ? 'image' : 'text';
 
         if (message_type === 'image') {
-            const fileBuffer = fs.readFileSync(image.path);
+            // Use buffer from memory storage instead of reading from disk
+            if (!image.buffer) {
+                throw new Error('Invalid image file upload - no data buffer');
+            }
+            
+            const fileName = `message_${userId}_${to_user_id}_${Date.now()}_${image.originalname || 'image'}`
+            
             const response = await imagekit.upload({
-                file: fileBuffer,
-                fileName: image.originalname,
+                file: image.buffer,
+                fileName: fileName,
+                useUniqueFileName: false
             });
             media_url = imagekit.url({
                 path: response.filePath,

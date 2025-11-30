@@ -77,11 +77,16 @@ export const updateUserData = async (req, res) => {
         // Handle profile picture upload
         if (profile) {
             try {
-                const buffer = fs.readFileSync(profile.path);
+                // Use buffer from memory storage instead of reading from disk
+                if (!profile.buffer) {
+                    throw new Error('Invalid profile file upload - no data buffer');
+                }
+                
                 const response = await imagekit.upload({
-                    file: buffer,
-                    fileName: `profile_${userId}_${Date.now()}`,
-                    folder: "/artwall/profiles"
+                    file: profile.buffer,
+                    fileName: `profile_${userId}_${Date.now()}_${profile.originalname || 'image'}`,
+                    folder: "/artwall/profiles",
+                    useUniqueFileName: false
                 });
 
                 const url = imagekit.url({
@@ -94,8 +99,6 @@ export const updateUserData = async (req, res) => {
                 });
                 updatedData.profile_picture = url;
                 
-                // Hapus file temporary
-                fs.unlinkSync(profile.path);
             } catch (uploadError) {
                 console.error('Profile picture upload error:', uploadError);
                 // Continue without failing the whole request
@@ -105,11 +108,16 @@ export const updateUserData = async (req, res) => {
         // Handle cover photo upload
         if (cover) {
             try {
-                const buffer = fs.readFileSync(cover.path);
+                // Use buffer from memory storage instead of reading from disk
+                if (!cover.buffer) {
+                    throw new Error('Invalid cover file upload - no data buffer');
+                }
+                
                 const response = await imagekit.upload({
-                    file: buffer,
-                    fileName: `cover_${userId}_${Date.now()}`,
-                    folder: "/artwall/covers"
+                    file: cover.buffer,
+                    fileName: `cover_${userId}_${Date.now()}_${cover.originalname || 'image'}`,
+                    folder: "/artwall/covers",
+                    useUniqueFileName: false
                 });
 
                 const url = imagekit.url({
@@ -122,8 +130,6 @@ export const updateUserData = async (req, res) => {
                 });
                 updatedData.cover_photo = url;
                 
-                // Hapus file temporary
-                fs.unlinkSync(cover.path);
             } catch (uploadError) {
                 console.error('Cover photo upload error:', uploadError);
                 // Continue without failing the whole request
