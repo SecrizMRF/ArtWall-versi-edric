@@ -112,6 +112,11 @@ export const getStories = async (req, res) => {
         console.log('📖 [Story] Found stories:', stories.length);
         console.log('📖 [Story] Stories data:', JSON.stringify(stories, null, 2));
 
+        // DEBUG: Check if new story exists in database
+        const allUserStories = await Story.find({user: userId}).sort({ createdAt: -1 });
+        console.log('📖 [Story] All stories for current user:', allUserStories.length);
+        console.log('📖 [Story] Latest story for user:', allUserStories[0]?._id);
+
         res.json ({ success: true, stories: stories});
     } catch (error) {
         console.error('📖 [Story] Error getting stories:', error);
