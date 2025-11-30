@@ -82,6 +82,7 @@ export const addUserStory = async (req, res) => {
 
 // get user stories
 export const getStories = async (req, res) => {
+    console.log('🚨 [STORY DEBUG] FUNCTION CALLED - VERSION 3.0 - DEPLOY CHECK');
     try {
         console.log('📖 [Story] Get stories request received - VERSION 2.0');
         console.log('📖 [Story] DEBUG - req.auth():', req.auth());
