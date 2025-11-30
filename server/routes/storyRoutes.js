@@ -5,7 +5,16 @@ import { addUserStory, getStories } from "../controllers/storyController.js";
 
 const storyRouter = express.Router()
 
-storyRouter.post('/create', upload.single('media'), protect, addUserStory)
+storyRouter.post('/create', (req, res, next) => {
+    console.log('🔍 [Route] POST /create - before multer');
+    next();
+}, upload.single('media'), (req, res, next) => {
+    console.log('🔍 [Route] POST /create - after multer');
+    next();
+}, protect, (req, res, next) => {
+    console.log('🔍 [Route] POST /create - after auth');
+    next();
+}, addUserStory)
 storyRouter.get('/get', protect, getStories)
 
 export default storyRouter
