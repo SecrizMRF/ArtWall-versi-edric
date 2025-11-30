@@ -87,7 +87,7 @@ const StoryModal = ({setShowModal, fetchStories}) => {
         console.log('📖 [StoryModal] Token preview:', token?.substring(0, 50) + '...');
         
         try {
-            console.log('📖 [StoryModal] Making API call to:', api.defaults.baseURL + '/api/stories/create');
+            console.log('📖 [StoryModal] Making API call to:', api.defaults.baseURL.replace(/\/$/, '') + '/api/stories/create');
             
             // Add timeout
             const controller = new AbortController();

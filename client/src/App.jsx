@@ -43,7 +43,7 @@ const App = () => {
     useEffect(()=>{
         if(user){
             console.log('🔌 Client: Setting up SSE connection for user:', user.id);
-            const eventSource = new EventSource(import.meta.env.VITE_BASEURL + '/api/messages/' + user.id);
+            const eventSource = new EventSource(import.meta.env.VITE_BASEURL.replace(/\/$/, '') + '/api/messages/' + user.id);
             
             eventSource.onopen = () => {
                 console.log('🔌 Client: SSE connection opened');
