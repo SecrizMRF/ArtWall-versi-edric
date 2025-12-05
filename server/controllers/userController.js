@@ -146,11 +146,15 @@ export const updateUserData = async (req, res) => {
             }
         }
         
+        console.log('🔄 Updating user with data:', updatedData);
+        
         const user = await User.findByIdAndUpdate(
             userId, 
             updatedData, 
             { new: true, runValidators: true }
         );
+        
+        console.log('✅ User updated successfully:', user);
         
         res.json({ 
             success: true, 

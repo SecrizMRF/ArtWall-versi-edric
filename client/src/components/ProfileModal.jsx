@@ -45,9 +45,12 @@ const ProfileModal = ({setShowEdit}) => {
             }
 
             const token = await getToken()
-            dispatch(updateUser({userData, token}))
-
-            setShowEdit(false)
+            const result = await dispatch(updateUser({userData, token}))
+            console.log('🔄 Update result:', result);
+            
+            if (result.payload) {
+                setShowEdit(false)
+            }
         } catch (error) {
             toast.error(error.message)
         }

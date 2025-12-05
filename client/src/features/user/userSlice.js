@@ -14,13 +14,15 @@ export const fetchUser = createAsyncThunk('user/fetchUser', async () => {
     return response.data.success ? response.data.user : null
 })
 
-export const updateUser = createAsyncThunk('user/updateUser', async (formData) => {
+export const updateUser = createAsyncThunk('user/updateUser', async ({userData, token}) => {
     console.log(' userSlice - Sending update request with FormData:');
-    for (let pair of formData.entries()) {
+    for (let pair of userData.entries()) {
         console.log(pair[0], pair[1]);
     }
     
-    const { data } = await api.post('/api/users/update', formData)
+    const { data } = await api.post('/api/users/update', userData, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
     
     console.log(' userSlice - Update response:', data);
     
