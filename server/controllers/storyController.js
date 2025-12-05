@@ -108,6 +108,7 @@ export const addUserStory = async (req, res) => {
         console.log('🚨 [STORY CREATE] STORY SAVED TO DATABASE!');
         console.log('📖 [Story] Story created successfully:', story._id);
         console.log('📖 [Story] Story data:', JSON.stringify(story, null, 2));
+        console.log('📖 [Story] Created story user field:', story.user, 'type:', typeof story.user);
 
         // schedule story deletion after 24 hours
         console.log('🔍 [Story] Attempting to schedule deletion for story:', story._id);
@@ -185,31 +186,31 @@ export const getStories = async (req, res) => {
         const userIds = [userId, ...user.connections, ...user.following]
         console.log('📖 [Story] User IDs to fetch stories for:', userIds);
 
-        // SIMPLIFIED: Just get all stories from the user and their connections
-        const stories = await Story.find({
-            user: {$in: userIds}
+        // Fetch connection/following stories
+        const storiesConn = await Story.find({
+            user: { $in: userIds }
         }).populate('user').sort({ createdAt: -1 });
 
-        console.log('📖 [Story] Found stories:', stories.length);
-        console.log('📖 [Story] Stories data:', JSON.stringify(stories, null, 2));
+        console.log('📖 [Story] Connection/following stories:', storiesConn.length);
 
-        // DEBUG: Check if new story exists in database
-        const allUserStories = await Story.find({user: userId}).sort({ createdAt: -1 });
-        console.log('📖 [Story] All stories for current user:', allUserStories.length);
-        console.log('📖 [Story] Latest story for user:', allUserStories[0]?._id);
+        // Fetch current user's own stories
+        const ownStories = await Story.find({ user: userId })
+            .populate('user')
+            .sort({ createdAt: -1 });
 
-        // DEBUG: removed hard-coded findById check
+        console.log('📖 [Story] Own stories count:', ownStories.length);
 
-        // TEMP FIX: Force include user's latest stories if missing
-        if (allUserStories.length > stories.length) {
-            console.log('🔧 [Story] FIX: Adding missing user stories');
-            const userStoryIds = stories.map(s => s._id.toString());
-            const missingStories = allUserStories.filter(s => !userStoryIds.includes(s._id.toString()));
-            stories.unshift(...missingStories);
-            console.log('🔧 [Story] Added', missingStories.length, 'missing stories');
-        }
+        // Merge and deduplicate by _id (prioritize own stories ordering first)
+        const mergedMap = new Map();
+        ownStories.forEach(s => mergedMap.set(String(s._id), s));
+        storiesConn.forEach(s => {
+            if (!mergedMap.has(String(s._id))) mergedMap.set(String(s._id), s);
+        });
+        const stories = Array.from(mergedMap.values());
 
-        res.json ({ success: true, stories: stories});
+        console.log('📖 [Story] Final stories to return:', stories.length);
+
+        res.json({ success: true, stories });
     } catch (error) {
         console.error('📖 [Story] Error getting stories:', error);
         res.json({ success: false, message: error.message})
