@@ -1,4 +1,5 @@
 import fs from "fs";
+import mongoose from "mongoose";
 import imagekit from "../configs/imageKit.js";
 import Story from "../models/Story.js";
 import User from "../models/User.js";
@@ -35,8 +36,8 @@ export const addUserStory = async (req, res) => {
         console.log('📖 [Story] DEBUG - req.auth():', req.auth());
         console.log('📖 [Story] DEBUG - req.authUserId:', req.authUserId);
         
-        const { userId } = req.auth();
-        console.log('📖 [Story] User ID from auth:', userId);
+        const userId = req.authUserId || (typeof req.auth === 'function' ? req.auth()?.userId : undefined);
+        console.log('📖 [Story] User ID from auth (resolved):', userId);
         
         if (!userId) {
             console.error('🚨 [STORY CREATE] NO USER ID!');
@@ -167,8 +168,8 @@ export const getStories = async (req, res) => {
         console.log('📖 [Story] DEBUG - req.auth():', req.auth());
         console.log('📖 [Story] DEBUG - req.authUserId:', req.authUserId);
         
-        const { userId } = req.auth();
-        console.log('📖 [Story] User ID from auth:', userId);
+        const userId = req.authUserId || (typeof req.auth === 'function' ? req.auth()?.userId : undefined);
+        console.log('📖 [Story] User ID from auth (resolved):', userId);
         
         const user = await User.findById(userId);
         if (!user) {
@@ -197,13 +198,7 @@ export const getStories = async (req, res) => {
         console.log('📖 [Story] All stories for current user:', allUserStories.length);
         console.log('📖 [Story] Latest story for user:', allUserStories[0]?._id);
 
-        // DEBUG: Check if the new story ID exists in database
-        console.log('📖 [Story] Checking if new story exists in DB...');
-        const newStoryCheck = await Story.findById('692c03152c93022568b79446');
-        console.log('📖 [Story] New story exists in DB:', !!newStoryCheck);
-        if (newStoryCheck) {
-            console.log('📖 [Story] New story data:', JSON.stringify(newStoryCheck, null, 2));
-        }
+        // DEBUG: removed hard-coded findById check
 
         // TEMP FIX: Force include user's latest stories if missing
         if (allUserStories.length > stories.length) {
