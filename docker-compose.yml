@@ -37,7 +37,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_BASEURL=http://0.0.0.0:4000
+      - VITE_BASEURL=http://localhost:4000
     env_file:
       - ./client/.env
     depends_on:
