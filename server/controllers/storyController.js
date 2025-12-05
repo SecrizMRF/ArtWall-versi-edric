@@ -21,7 +21,7 @@ export const addUserStory = async (req, res) => {
         
         if (!userId) {
             console.error('🚨 [STORY CREATE] ❌ NO USER ID - AUTH FAILED');
-            return res.json({ success: false, message: 'User not authenticated' });
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
         }
         
         const { content, media_type, background_color } = req.body;
@@ -120,7 +120,7 @@ export const getStories = async (req, res) => {
         
         if (!userId) {
             console.error('📖 [STORY GET] ❌ NO USER ID');
-            return res.json({ success: false, message: 'User not authenticated' });
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
         }
 
         // Get user and their connections/following

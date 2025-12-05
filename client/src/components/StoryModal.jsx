@@ -32,7 +32,7 @@ const StoryModal = ({setShowModal, fetchStories}) => {
                 const video = document.createElement('video');
                 video.preload = 'metadata';
                 video.onloadedmetadata = () => {
-                    window.URL.revokeObjectURL(video.scr)
+                    window.URL.revokeObjectURL(video.src)
                     if(video.duration > MAX_VIDEO_DURATION){
                         toast.error("Video duration cannot exceed 1 minute.")
                         setMedia(null)
@@ -65,7 +65,8 @@ const StoryModal = ({setShowModal, fetchStories}) => {
         const media_type = mode === 'media' ? media?.type.startsWith('image') ? 'image' : "video" : "text";
 
         if(media_type === "text" && !text){
-            throw new Error("Please enter some text")
+            toast.error("Please enter some text")
+            return
         }
 
         let formData = new FormData();
