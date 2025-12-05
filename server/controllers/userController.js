@@ -10,9 +10,19 @@ export const getUserData = async (req, res) => {
     try {
         const userId = req.auth().userId; // From Clerk middleware
         
-        const user = await User.findById(userId);
+        let user = await User.findById(userId);
+        
+        // Create user if doesn't exist in local DB
         if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+            user = await User.create({
+                _id: userId,
+                email: `${userId}@temp.com`,
+                username: userId.slice(-8),
+                full_name: 'Docker User',
+                connections: [],
+                following: [],
+                followers: []
+            });
         }
         
         return res.json({ 
