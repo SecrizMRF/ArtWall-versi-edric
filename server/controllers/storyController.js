@@ -7,212 +7,170 @@ import { inngest } from "../inngest/index.js";
 
 // Add user story
 export const addUserStory = async (req, res) => {
-    // IMMEDIATE LOG - This will ALWAYS show if function is called
-    console.log('🚨🚨🚨 [STORY CREATE] FUNCTION CALLED AT:', new Date().toISOString());
-    console.log('🚨🚨🚨 [STORY CREATE] ENTRY POINT REACHED!');
-    console.log('🚨🚨🚨 [STORY CREATE] CALL STACK:', new Error().stack);
-    console.log('🚨🚨🚨 [STORY CREATE] Timestamp:', new Date().toISOString());
-    console.log('🚨🚨🚨 [STORY CREATE] Process ID:', process.pid);
-    console.log('🚨🚨🚨 [STORY CREATE] Memory usage:', process.memoryUsage());
-    console.log('🚨🚨🚨 [STORY CREATE] Request object exists:', !!req);
-    console.log('🚨🚨🚨 [STORY CREATE] Response object exists:', !!res);
-    console.log('🚨🚨🚨 [STORY CREATE] Request method:', req?.method);
-    console.log('🚨🚨🚨 [STORY CREATE] Request URL:', req?.url);
-    console.log('🚨🚨🚨 [STORY CREATE] Request headers:', req?.headers ? Object.keys(req.headers) : 'No headers');
+    console.log('\n🚨🚨🚨 [STORY CREATE] START - Time:', new Date().toISOString());
     
     try {
-        console.log('🚨 [STORY CREATE] FUNCTION STARTED!');
-        console.log('🚨 [STORY CREATE] Request method:', req.method);
-        console.log('🚨 [STORY CREATE] Request URL:', req.url);
-        console.log('🚨 [STORY CREATE] Request path:', req.path);
-        console.log('🚨 [STORY CREATE] Request original URL:', req.originalUrl);
-        console.log('🚨 [STORY CREATE] Request headers:', Object.keys(req.headers));
-        console.log('🚨 [STORY CREATE] Content-Type:', req.headers['content-type']);
-        console.log('🚨 [STORY CREATE] Authorization:', req.headers.authorization ? 'Present' : 'Missing');
+        // Get userId from auth - try both sources
+        const authObj = typeof req.auth === 'function' ? req.auth() : null;
+        const userId = req.authUserId || authObj?.userId;
         
-        console.log('📖 [Story] Create story request received');
-        console.log('📖 [Story] Request body:', req.body);
-        console.log('📖 [Story] Request file:', req.file);
-        console.log('📖 [Story] DEBUG - req.auth():', req.auth());
-        console.log('📖 [Story] DEBUG - req.authUserId:', req.authUserId);
-        
-        const userId = req.authUserId || (typeof req.auth === 'function' ? req.auth()?.userId : undefined);
-        console.log('📖 [Story] User ID from auth (resolved):', userId);
+        console.log('🚨 [STORY CREATE] Auth resolved:');
+        console.log('  - req.authUserId:', req.authUserId);
+        console.log('  - req.auth()?.userId:', authObj?.userId);
+        console.log('  - FINAL userId:', userId);
         
         if (!userId) {
-            console.error('🚨 [STORY CREATE] NO USER ID!');
+            console.error('🚨 [STORY CREATE] ❌ NO USER ID - AUTH FAILED');
             return res.json({ success: false, message: 'User not authenticated' });
         }
         
         const { content, media_type, background_color } = req.body;
-        const media = req.file
-        let media_url = ''
+        const media = req.file;
+        let media_url = '';
 
-        console.log('📖 [Story] Story data:', { content, media_type, background_color, media: !!media });
+        console.log('🚨 [STORY CREATE] Input data:');
+        console.log('  - userId:', userId);
+        console.log('  - content:', content);
+        console.log('  - media_type:', media_type);
+        console.log('  - hasMedia:', !!media);
 
-        // upload media to imagekit
-        if (media_type === 'image' || media_type === 'video'){
+        // Upload media if needed
+        if (media_type === 'image' || media_type === 'video') {
             if (!media) {
-                console.error('📖 [Story] Error: media_type is', media_type, 'but no media file provided');
-                return res.status(400).json({ success: false, message: 'Media file required for image/video stories' });
+                console.error('🚨 [STORY CREATE] Media type is', media_type, 'but no file provided');
+                return res.status(400).json({ success: false, message: 'Media file required' });
             }
             
-            // Validate buffer exists
             if (!media.buffer) {
-                console.error('📖 [Story] Error: No buffer in uploaded file');
-                return res.status(400).json({ success: false, message: 'Invalid file upload - no data' });
+                console.error('🚨 [STORY CREATE] No buffer in file');
+                return res.status(400).json({ success: false, message: 'Invalid file upload' });
             }
             
-            // Use buffer from memory storage with proper file handling
-            const fileBuffer = media.buffer
-            const fileName = `story_${userId}_${Date.now()}_${media.originalname || 'image'}`
+            const fileBuffer = media.buffer;
+            const fileName = `story_${userId}_${Date.now()}_${media.originalname || 'file'}`;
             
-            console.log('📖 [Story] Uploading file:', fileName);
-            console.log('📖 [Story] Buffer size:', fileBuffer.length);
+            console.log('🚨 [STORY CREATE] Uploading to ImageKit:', fileName);
             
             try {
                 const response = await imagekit.upload({
                     file: fileBuffer,
                     fileName: fileName,
-                    useUniqueFileName: false // Prevent duplicate filename issues
-                })
-                media_url = response.url
-                console.log('📖 [Story] Media uploaded to:', media_url);
-            } catch (uploadError) {
-                console.error('📖 [Story] ImageKit upload error:', uploadError);
-                console.error('📖 [Story] Upload error details:', {
-                    message: uploadError.message,
-                    status: uploadError.status,
-                    code: uploadError.code
+                    useUniqueFileName: false
                 });
+                media_url = response.url;
+                console.log('🚨 [STORY CREATE] ✅ Media uploaded:', media_url);
+            } catch (uploadError) {
+                console.error('🚨 [STORY CREATE] ImageKit error:', uploadError.message);
                 return res.status(500).json({ 
                     success: false, 
-                    message: 'Failed to upload media to cloud storage',
+                    message: 'Failed to upload media',
                     error: uploadError.message 
                 });
             }
         }
         
-        console.log('🚨 [STORY CREATE] ABOUT TO SAVE TO DATABASE...');
-        console.log('🚨 [STORY CREATE] Story model exists:', !!Story);
-        
-        // create story
+        // Save to database
+        console.log('🚨 [STORY CREATE] Saving story to DB...');
         const story = await Story.create({
             user: userId,
             content,
             media_url,
             media_type,
             background_color
-        })
+        });
         
-        console.log('🚨 [STORY CREATE] STORY SAVED TO DATABASE!');
-        console.log('📖 [Story] Story created successfully:', story._id);
-        console.log('📖 [Story] Story data:', JSON.stringify(story, null, 2));
-        console.log('📖 [Story] Created story user field:', story.user, 'type:', typeof story.user);
+        console.log('🚨 [STORY CREATE] ✅ SAVED! Story ID:', story._id);
+        console.log('🚨 [STORY CREATE] Story user field:', story.user, '(type:', typeof story.user + ')');
 
-        // schedule story deletion after 24 hours
-        console.log('🔍 [Story] Attempting to schedule deletion for story:', story._id);
-        console.log('🔍 [Story] Inngest client available:', !!inngest);
-        console.log('🔍 [Story] Event Key available:', !!process.env.INNGEST_EVENT_KEY);
-        
+        // Schedule deletion
         try {
-            const eventResult = await inngest.send({
+            await inngest.send({
                 name: 'app/story.delete',
                 data: { storyId: story._id }
             });
-            console.log('✅ [Story] Inngest event sent successfully:', eventResult);
+            console.log('🚨 [STORY CREATE] ✅ Inngest scheduled');
         } catch (inngestError) {
-            console.error('❌ [Story] Failed to send Inngest event:', inngestError);
-            console.error('❌ [Story] Error details:', {
-                message: inngestError.message,
-                status: inngestError.status,
-                stack: inngestError.stack
-            });
-            // Continue with story creation even if Inngest fails
-            console.log('⚠️ [Story] Continuing without Inngest scheduling');
+            console.error('🚨 [STORY CREATE] Inngest error (non-critical):', inngestError.message);
         }
 
-        console.log('🚨 [STORY CREATE] SENDING RESPONSE TO FRONTEND...');
-        console.log('🚨 [STORY CREATE] Response data:', {success: true, storyId: story._id});
-        res.json({success: true, storyId: story._id})
-        console.log('🚨 [STORY CREATE] RESPONSE SENT!');
-        console.log('🚨🚨🚨 [STORY CREATE] FUNCTION COMPLETED!');
+        console.log('🚨 [STORY CREATE] ✅ SENDING RESPONSE');
+        res.json({ success: true, storyId: story._id });
+        console.log('🚨🚨🚨 [STORY CREATE] END - SUCCESS\n');
+        
     } catch (error) {
-        console.error('🚨🚨🚨 [STORY CREATE] ERROR IN FUNCTION:', error);
-        console.error('🚨 [STORY CREATE] ERROR CREATING STORY:', error);
-        console.error('📖 [Story] Error creating story:', error);
-        console.error('📖 [Story] Full error stack:', error.stack);
-        res.json({ success: false, message: error.message })
+        console.error('🚨🚨🚨 [STORY CREATE] ❌ ERROR:', error.message);
+        console.error('🚨 [STORY CREATE] Stack:', error.stack);
+        res.json({ success: false, message: error.message });
     }
 }
 
-// get user stories
+// Get user stories
 export const getStories = async (req, res) => {
-    console.log('🚨 [STORY DEBUG] FUNCTION CALLED - VERSION 3.0 - DEPLOY CHECK');
-    console.log('🚨🚨🚨 [STORY DEBUG] ENTRY POINT REACHED!');
-    console.log('🚨🚨🚨 [STORY DEBUG] CALL STACK:', new Error().stack);
-    console.log('🚨🚨🚨 [STORY DEBUG] Timestamp:', new Date().toISOString());
-    console.log('🚨🚨🚨 [STORY DEBUG] Process ID:', process.pid);
-    console.log('🚨🚨🚨 [STORY DEBUG] Memory usage:', process.memoryUsage());
+    console.log('\n📖📖📖 [STORY GET] START - Time:', new Date().toISOString());
     
     try {
-        console.log('🚨 [STORY DEBUG] FUNCTION STARTED!');
-        console.log('🚨 [STORY DEBUG] Request method:', req.method);
-        console.log('🚨 [STORY DEBUG] Request URL:', req.url);
-        console.log('🚨 [STORY DEBUG] Request path:', req.path);
-        console.log('🚨 [STORY DEBUG] Request original URL:', req.originalUrl);
-        console.log('🚨 [STORY DEBUG] Request headers:', Object.keys(req.headers));
-        console.log('🚨 [STORY DEBUG] Content-Type:', req.headers['content-type']);
-        console.log('🚨 [STORY DEBUG] Authorization:', req.headers.authorization ? 'Present' : 'Missing');
+        // Get userId from auth - try both sources
+        const authObj = typeof req.auth === 'function' ? req.auth() : null;
+        const userId = req.authUserId || authObj?.userId;
         
-        console.log('📖 [Story] Get stories request received - VERSION 2.0');
-        console.log('📖 [Story] DEBUG - req.auth():', req.auth());
-        console.log('📖 [Story] DEBUG - req.authUserId:', req.authUserId);
+        console.log('📖 [STORY GET] Auth resolved:');
+        console.log('  - req.authUserId:', req.authUserId);
+        console.log('  - req.auth()?.userId:', authObj?.userId);
+        console.log('  - FINAL userId:', userId);
         
-        const userId = req.authUserId || (typeof req.auth === 'function' ? req.auth()?.userId : undefined);
-        console.log('📖 [Story] User ID from auth (resolved):', userId);
-        
-        const user = await User.findById(userId);
-        if (!user) {
-            console.log('📖 [Story] User not found:', userId);
-            return res.json({ success: false, message: 'User not found' })
+        if (!userId) {
+            console.error('📖 [STORY GET] ❌ NO USER ID');
+            return res.json({ success: false, message: 'User not authenticated' });
         }
 
-        console.log('📖 [Story] User found:', user._id);
-        console.log('📖 [Story] User connections:', user.connections);
-        console.log('📖 [Story] User following:', user.following);
+        // Get user and their connections/following
+        const user = await User.findById(userId);
+        if (!user) {
+            console.error('📖 [STORY GET] ❌ User not found:', userId);
+            return res.json({ success: false, message: 'User not found' });
+        }
 
-        // User connections and followings  
-        const userIds = [userId, ...user.connections, ...user.following]
-        console.log('📖 [Story] User IDs to fetch stories for:', userIds);
+        console.log('📖 [STORY GET] User found:', user._id);
+        console.log('📖 [STORY GET] Connections:', user.connections?.length || 0);
+        console.log('📖 [STORY GET] Following:', user.following?.length || 0);
+
+        // Build list of user IDs to fetch stories from
+        const userIds = [userId, ...(user.connections || []), ...(user.following || [])];
+        console.log('📖 [STORY GET] Fetching stories from', userIds.length, 'users');
 
         // Fetch connection/following stories
         const storiesConn = await Story.find({
             user: { $in: userIds }
         }).populate('user').sort({ createdAt: -1 });
 
-        console.log('📖 [Story] Connection/following stories:', storiesConn.length);
+        console.log('📖 [STORY GET] Connection/following stories:', storiesConn.length);
 
-        // Fetch current user's own stories
+        // Fetch current user's own stories (to ensure they're included)
         const ownStories = await Story.find({ user: userId })
             .populate('user')
             .sort({ createdAt: -1 });
 
-        console.log('📖 [Story] Own stories count:', ownStories.length);
+        console.log('📖 [STORY GET] Own stories:', ownStories.length);
 
-        // Merge and deduplicate by _id (prioritize own stories ordering first)
+        // Merge and deduplicate by _id
         const mergedMap = new Map();
         ownStories.forEach(s => mergedMap.set(String(s._id), s));
         storiesConn.forEach(s => {
-            if (!mergedMap.has(String(s._id))) mergedMap.set(String(s._id), s);
+            if (!mergedMap.has(String(s._id))) {
+                mergedMap.set(String(s._id), s);
+            }
         });
         const stories = Array.from(mergedMap.values());
 
-        console.log('📖 [Story] Final stories to return:', stories.length);
+        console.log('📖 [STORY GET] ✅ Final stories to return:', stories.length);
+        console.log('📖 [STORY GET] Story IDs:', stories.map(s => s._id).join(', '));
 
         res.json({ success: true, stories });
+        console.log('📖📖📖 [STORY GET] END - SUCCESS\n');
+        
     } catch (error) {
-        console.error('📖 [Story] Error getting stories:', error);
-        res.json({ success: false, message: error.message})
+        console.error('📖📖📖 [STORY GET] ❌ ERROR:', error.message);
+        console.error('📖 [STORY GET] Stack:', error.stack);
+        res.json({ success: false, message: error.message });
     }
 }

@@ -49,4 +49,19 @@ storyRouter.post(
 storyRouter.get('/get', protect, getStories)
 storyRouter.get('/get-v3', protect, getStories)
 
+// DEBUG: Check all stories in database
+storyRouter.get('/debug/all-stories', async (req, res) => {
+    try {
+        const Story = (await import('../models/Story.js')).default;
+        const stories = await Story.find().populate('user').sort({ createdAt: -1 }).limit(20);
+        console.log('📖 [DEBUG] All stories in DB:', stories.length);
+        stories.forEach(s => {
+            console.log(`  - ID: ${s._id}, user: ${s.user?._id || s.user}, type: ${s.media_type}, created: ${s.createdAt}`);
+        });
+        res.json({ success: true, count: stories.length, stories });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
 export default storyRouter
