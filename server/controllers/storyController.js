@@ -134,6 +134,11 @@ export const getStories = async (req, res) => {
         console.log('📖 [STORY GET] Connections:', user.connections?.length || 0);
         console.log('📖 [STORY GET] Following:', user.following?.length || 0);
 
+        // Cleanup old stories (older than 24 hours)
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        await Story.deleteMany({ createdAt: { $lt: twentyFourHoursAgo } });
+        console.log('📖 [STORY GET] Cleaned up old stories');
+
         // Build list of user IDs to fetch stories from
         const userIds = [userId, ...(user.connections || []), ...(user.following || [])];
         console.log('📖 [STORY GET] Fetching stories from', userIds.length, 'users');

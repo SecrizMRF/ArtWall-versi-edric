@@ -64,4 +64,16 @@ storyRouter.get('/debug/all-stories', async (req, res) => {
     }
 });
 
+// DEBUG: Cleanup old stories manually
+storyRouter.get('/debug/cleanup-old', async (req, res) => {
+    try {
+        const Story = (await import('../models/Story.js')).default;
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const result = await Story.deleteMany({ createdAt: { $lt: twentyFourHoursAgo } });
+        res.json({ success: true, deletedCount: result.deletedCount });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
 export default storyRouter
